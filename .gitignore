@@ -1,0 +1,33 @@
+# Jupyter
+*.ipynb
+.ipynb_checkpoints/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Logs and temp dirs
+logs/
+temp/
+var/
+
+# Output / backups
+*.out
+*.bak
+*~
+output*
+
+# pip info
+*.egg-info
+
+# GIMP `.xcf` files
+*.xcf
+
+# ChatGPT's name for backup folders, apparently
+._*/
+
+# Calc's temp folders?
+.~*#
+
+.venv/
+

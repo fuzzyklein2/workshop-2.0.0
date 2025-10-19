@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "workshop"
+version = "2.0.0"
+description = "Python IDE with a command-line application interface."
+authors = [{ name = "Russell Klein" }]
+requires-python = ">=3.12"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["workshop*"]
+# exclude = ["etc*", "data*"]
+
+[tool.setuptools.package-data]
+workshop = ["data/**/*"]
