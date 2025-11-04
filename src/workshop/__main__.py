@@ -8,7 +8,7 @@ MODULE_NAME = Path(__file__).stem
 
 __doc__ = f"""A concise summary of what this module does.
 
-:module: {PKG_NAME}.{MODULE_NAME}
+:module: {PACKAGE_NAME}.{MODULE_NAME}
 :version: {VERSION}
 :author: {AUTHOR}
 :date: {last_saved_datetime(__file__)}

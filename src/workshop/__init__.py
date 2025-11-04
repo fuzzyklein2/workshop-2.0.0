@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-from pygnition._initools import AUTHOR, DESCRIPTION, last_saved_datetime, PKG_NAME, REQUIREMENTS
+from pygnition import *
 
-from ._version import VERSION
-
-__doc__ = f"""The 🛠️  {PKG_NAME} 🛠️  program is a test run for the 🔥  pygnition 🔥  project.
+__doc__ = f"""The 🛠️  {PACKAGE_NAME} 🛠️  program is a test run for the 🔥  pygnition 🔥  project.
 
 ========== ⚠️  WARNING! ⚠️  ==========
 
@@ -21,7 +19,7 @@ Stay tuned for updates.
 
 ## Usage
 
-`$ python -m {PKG_NAME} [OPTIONS] [ARGUMENTS]`
+`$ python -m {PACKAGE_NAME} [OPTIONS] [ARGUMENTS]`
 
 ## System Requirements
 

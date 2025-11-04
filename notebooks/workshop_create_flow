@@ -1,0 +1,27 @@
+digraph WorkshopCreateFlow {
+    rankdir=TB;
+    node [shape=box, style=rounded];
+
+    CLI [label="CLI 'create' command
+(options: private/public, template, destination)"];
+    Init [label="Create.__init__
+(open new project dialog)"];
+    Run [label="Create.run()"];
+
+    CheckRepo [shape=diamond, label="Repository exists?"];
+    CreateRepo [label="ensure_repo_exists()
+(create repo if needed,
+use template, set visibility)"];
+    CloneRepo [label="clone_repo()
+(clone SSH repo to destination)"];
+
+    CLI -> Init [label="collects inputs"];
+    Init -> Run [label="triggers run"];
+    Run -> CheckRepo;
+
+    CheckRepo -> CloneRepo [label="Yes
+(pass SSH URL)"];
+    CheckRepo -> CreateRepo [label="No"];
+    CreateRepo -> CloneRepo [label="Repo created
+(pass SSH URL"];
+}

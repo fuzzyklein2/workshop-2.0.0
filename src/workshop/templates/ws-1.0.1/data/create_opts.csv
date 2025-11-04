@@ -1,0 +1,10 @@
+short,long,action,dest,help,metavar,nargs
+,,,args,Files to be processed.,ARGUMENT,*
+-d,--debug,store_true,debug,Set to run the program in DEBUG mode.,,
+-v,--verbose,store_true,verbose,Display extra information.,,
+-t,--test,store_true,testing,Run the `doctest`s in `main.py`,,
+-c,--config,,config,Specify a configuration file.,,
+-o,--output,,output,Specify a file to be used as output.,,
+-q,--quiet,store_true,quiet,Suppress screen output.,,
+-w,--warnings,store_true,warnings,Display warning messages.,,
+-p,--python,store_true,py,Create a Python project,,
