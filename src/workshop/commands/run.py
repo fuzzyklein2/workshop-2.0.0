@@ -33,13 +33,26 @@ details here.
 ## [GitHub]({get_upstream_url()})
 
 """
+
+from pygnition.driver import Driver
+
 from workshop.projects import Project
 
-@Project.register("script")
-class Script(Project):
-    """A simple single-file or lightweight Python script project."""
-    def describe(self):
-        return f"[bold]{self.name}[/bold] (Script Project)"
+class Run(Driver.Command):
+    """ Run the project given on the command line, the current project,
+        or whatever project is represented by cwd(), if any.
+    """
+    def __init__(self, name, line, **kwargs):
+        super().__init__(name, line, **kwargs)
 
     def run(self):
-        info(f'Running {self.__class__.name} {str(self.path)}')
+        result = None
+        project = self.driver.current_project
+        if not project:
+            if not self.args:
+                project = Project(cwd())
+                return project.run()
+            else:
+                for project in self.args:
+                    return Project(project).run()
+        return result

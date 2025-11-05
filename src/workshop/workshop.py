@@ -57,12 +57,14 @@ from rich import print as rp
 from pygnition.constants import HYPHEN
 from pygnition.driver import Driver
 from pygnition.files import File
+from pygnition.gui_tools import choose_file
 from pygnition.picts import *
 from pygnition.lumberjack import debug, error, info, stop, warn
 from pygnition.strings import is_valid_module_name
 from pygnition.tools import cwd
 from pygnition.where import USER_PREFS_DIR
 
+from .commands import COMMANDS
 from .constants import KEY_PROMPTS
 from .ghtools import *
 from .new_project_dialog import new_project_dialog
@@ -70,101 +72,143 @@ from .projects import Project # probably don't really need to except for type hi
 
 class Workshop(Driver):
     def __init__(self, *args, **kwargs):
-        Driver.__init__(*args, **kwargs)
-        print(self.args[0])
-        self.current_project = Project(cwd())
-        self.prompt = 'ws'
+        Driver.__init__(self, *args, **kwargs)
+        if self.debug and self.args: print(self.args[0])
+        self.current_project = Project(cwd()) or None
+        for name, cls in COMMANDS.items():
+            setattr(self, name.title(), cls)
 
-    class Open(Driver.Command):
-        """ Open a project by `cd`'ing to its root directory. """
-        def __init__(self, name, line, **kwargs):
-            super().__init__(name, line, **kwargs)
+    @classmethod
+    def find_class(cls, name):
+        '''Return the Command class that matches with `name`.'''
+        cmd_class = COMMANDS.get(name.lower())
+        if cmd_class:
+            return cmd_class
+        # fallback to original Driver.find_class
+        for attr_name, attr_value in vars(cls).items():
+            if isinstance(attr_value, type) and attr_name.lower() == name.lower():
+                return attr_value
+        return None
 
-            # pp(self.args)
+# class Run(Driver.Command):
+    #     """ Run the project given on the command line, the current project,
+    #         or whatever project is represented by cwd(), if any.
+    #     """
+    #     def __init__(self, name, line, **kwargs):
+    #         super().__init__(name, line, **kwargs)
 
-            self.log.debug(f'{DEBUG_PICT}Running `{self.cmd_name}`')
+    #     def run(self):
+    #         result = None
+    #         project = self.driver.current_project
+    #         if not project:
+    #             if not self.args:
+    #                 project = Project(cwd())
+    #                 return project.run()
+    #             else:
+    #                 for project in self.args:
+    #                     return Project(project).run()
+    #         return result
 
-        def run(self):
-            if self.args:
-                p = Project(self.args[0])
-                self.driver.current_project = p
-                self.log.info(f'{INFO_PICT}Opened {p.describe()}')
-            else:
-                self.log.warning(f'{WARNING_PICT}open command requires an argument.')
+    # class Open(Driver.Command):
+    #     """ Open a project by `cd`'ing to its root directory. """
+    #     def __init__(self, name, line, **kwargs):
+    #         super().__init__(name, line, **kwargs)
 
-    class Create(Driver.Command):
-        def __init__(self, name, line, **kwargs):
-            super().__init__(name, line, **kwargs)
-            self.repo_url = None
-            self.template_repo_url = None
-            self.clone_dest = None
+    #         # pp(self.args)
+
+    #         self.log.debug(f'{DEBUG_PICT}Running `{self.cmd_name}`')
+
+    #     def run(self):
+    #         f = None
+    #         if self.args:
+    #             self.driver.current_project = Project(self.args[0])
+    #         else: f = choose_file(directory=True)
+    #         if f:
+    #             self.driver.current_project = File(f)
+    #             if self.verbose: rp(f"""{INFO_PICT}[cyan bold]Current project[/]:
+    # {str(self.driver.current_project)}
+    # """)
+    #             debug(f'{type(self.driver.current_project)=}')
+    #             # if self.args:
+    #             #     p = Project(self.args[0])
+    #             #     self.driver.current_project = p
+    #             #     self.log.info(f'{INFO_PICT}Opened {p.describe()}')
+    #             # else:
+    #             #     self.log.warning(f'{WARNING_PICT}open command requires an argument.')
+
+#     class Create(Driver.Command):
+#         def __init__(self, name, line, **kwargs):
+#             super().__init__(name, line, **kwargs)
+#             self.repo_url = None
+#             self.template_repo_url = None
+#             self.clone_dest = None
             
-            if len(self.args):
-                p = File(self.args[0])
-            else: p = File(cwd())
+#             if len(self.args):
+#                 p = File(self.args[0])
+#             else: p = File(cwd())
 
-            self.log.debug(f'{DEBUG_PICT}{type(p)=}')
+#             self.log.debug(f'{DEBUG_PICT}{type(p)=}')
 
-            if type(p) is not Project:
-                COMPONENTS = p.name.split(HYPHEN)
+#             if type(p) is not Project:
+#                 COMPONENTS = p.name.split(HYPHEN)
 
-            self.log.debug(f'{DEBUG_PICT}Opening New Project dialog.')
+#             self.log.debug(f'{DEBUG_PICT}Opening New Project dialog.')
 
-            self.params = new_project_dialog(KEY_PROMPTS)
+#             self.params = new_project_dialog(KEY_PROMPTS)
 
-            if self.debug: rp(f"""{DEBUG_PICT}[red]DEBUG[/red] {DEBUG_PICT}
-[cyan][bold]New Project parameters[/bold][/cyan]:
+#             if self.debug: rp(f"""{DEBUG_PICT}[red]DEBUG[/red] {DEBUG_PICT}
+# [cyan][bold]New Project parameters[/bold][/cyan]:
 
-{pformat(self.params)}
-""")
-            if not self.params:
-                self.log.info(f'{INFO_PICT}New project cancelled by user.')
-                return
-            else:
-                self.log.info(f'{INFO_PICT}Creating {params['type']} project {params['name']} at {str(params['path'])}')
+# {pformat(self.params)}
+# """)
+#             if not self.params:
+#                 self.log.info(f'{INFO_PICT}New project cancelled by user.')
+#                 return
+#             else:
+#                 self.log.info(f'{INFO_PICT}Creating {params['type']} project {params['name']} at {str(params['path'])}')
 
-            self.log.info(f'{INFO_PICT}Creating project {str(p)}')
-            if self.params:
-                self.repo_url = params['github']
-                self.template_repo_url = Project.GH_TEMPLATES[params['type'].lower()]
-                self.clone_dest = params['path']
+#             self.log.info(f'{INFO_PICT}Creating project {str(p)}')
+#             if self.params:
+#                 self.repo_url = params['github']
+#                 self.template_repo_url = Project.GH_TEMPLATES[params['type'].lower()]
+#                 self.clone_dest = params['path']
 
-        def run(self):
-            debug(f'Running {self.cmd_name}')
-            if self.testing: debug(f'Testing {self.cmd_name} command.')
-            # data = input_params_gui(key_prompts)
-            # TODO: Do the dialog here and collect the data.
-            # print("Collected:", data)
-            """Ensure repo exists and clone it."""
-            # 1. Ensure repository exists (creates if needed)
-            if self.params:
-                ssh_url = https_to_ssh(self.repo_url)
+#         def run(self):
+#             debug(f'Running {self.cmd_name}')
+#             if self.testing: debug(f'Testing {self.cmd_name} command.')
+#             # data = input_params_gui(key_prompts)
+#             # TODO: Do the dialog here and collect the data.
+#             # print("Collected:", data)
+#             """Ensure repo exists and clone it."""
+#             # 1. Ensure repository exists (creates if needed)
+#             if self.params:
+#                 ssh_url = https_to_ssh(self.repo_url)
                 
-                # Use ensure_repo_exists function to create/check repo
-                repo_path = ensure_repo_exists(self.repo_url, self.template_repo_url, prefs_dir = USER_PREFS_DIR)
+#                 # Use ensure_repo_exists function to create/check repo
+#                 repo_path = ensure_repo_exists(self.repo_url, self.template_repo_url, prefs_dir = USER_PREFS_DIR)
                 
-                # 2. Clone the repository
-                # clone_path = clone_repo(ssh_url, self.clone_dest)
+#                 # 2. Clone the repository
+#                 # clone_path = clone_repo(ssh_url, self.clone_dest)
                 
-                print(f"Repository is ready at {repo_path}")
-                return repo_path
-            return
+#                 print(f"Repository is ready at {repo_path}")
+#                 return repo_path
+#             return
     
-    class Compile(Driver.Command):
-        def __init__(self, name, line):
-            super().__init__(name, line)
-            debug(f'Initializing {self.__class__.__name__} object ...')
+    # class Compile(Driver.Command):
+    #     def __init__(self, name, line):
+    #         super().__init__(name, line)
+    #         debug(f'Initializing {self.__class__.__name__} object ...')
 
-    def __init__(self):
-        super().__init__()
+    # def __init__(self):
+    #     super().__init__()
 
-    def test(self):
-        warn(f'{self.name} is under construction!')
-        if self.testing: self.dump()
+    # def test(self):
+    #     warn(f'{self.name} is under construction!')
+    #     if self.testing: self.dump()
 
-    def run(self):
-        print(f'Hello, {GLOBE_AMERICA_PICT.strip()} !')
-        super().run()
+    # def run(self):
+    #     print(f'Hello, {GLOBE_AMERICA_PICT.strip()} !')
+    #     super().run()
 
 if __name__ == '__main__':
     p = Workshop()

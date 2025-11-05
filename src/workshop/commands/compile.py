@@ -33,13 +33,24 @@ details here.
 ## [GitHub]({get_upstream_url()})
 
 """
+
+from pygnition.driver import Driver
+
 from workshop.projects import Project
 
-@Project.register("script")
-class Script(Project):
-    """A simple single-file or lightweight Python script project."""
-    def describe(self):
-        return f"[bold]{self.name}[/bold] (Script Project)"
+class Compile(Driver.Command):
+    def __init__(self, name, line):
+        super().__init__(name, line)
+        debug(f'Initializing {self.__class__.__name__} object ...')
 
-    def run(self):
-        info(f'Running {self.__class__.name} {str(self.path)}')
+def __init__(self):
+    super().__init__()
+
+def test(self):
+    warn(f'{self.name} is under construction!')
+    if self.testing: self.dump()
+
+def run(self):
+    print(f'Hello, {GLOBE_AMERICA_PICT.strip()} !')
+    super().run()
+

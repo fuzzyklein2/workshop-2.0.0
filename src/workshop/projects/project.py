@@ -45,7 +45,34 @@ from pygnition._data_tools import is_valid_data_line
 from pygnition.constants import HYPHEN
 from pygnition.files import File, Folder
 from pygnition._git_tools import get_github_username
+from pygnition.lumberjack import debug, error, info, stop, warn
+from pygnition.picts import *
 from pygnition.user_tools import get_full_name
+
+def parse_nv(s: str | Path) -> (str, str):
+    debug(f'{type(s)=}')
+    COMPONENTS = Path(s).name.split(HYPHEN)
+    return (HYPHEN.join(COMPONENTS[:-1]), COMPONENTS[-1])
+
+def looks_like_project(base: Path) -> bool:
+    """Heuristic check for project folder structure."""
+    # 1. Folder name ends with a version string like "-1.2.0" or "-v1.2.0b"
+    if re.search(r'-v?\d+(?:\.\d+){0,4}[a-z]?$', base.name):
+        return True
+
+    # 2. Contains a 'src' directory (standard Python layout)
+    if (base / "src").is_dir():
+        return True
+
+    # 3. Has pyproject.toml or setup.py
+    if (base / "pyproject.toml").exists() or (base / "setup.py").exists():
+        return True
+
+    # 4. Has at least one Python file (not setup.py)
+    if any(p.suffix == ".py" and p.name != "setup.py" for p in base.iterdir()):
+        return True
+
+    return False
 
 class Project(Folder):
     """A folder representing a Python project."""
@@ -107,7 +134,7 @@ class Project(Folder):
 
         path = Path(p)
         try:
-            project_type = cls._detect_type_static(path)
+            project_type = cls.detect_type(path)
             subclass = cls._registry.get(project_type, cls)
             if subclass is not cls:
                 return super(Project, subclass).__new__(subclass)
@@ -116,45 +143,45 @@ class Project(Folder):
 
         return super().__new__(cls)
 
-    @staticmethod
-    def _detect_type_static(path: Path) -> str:
-        """
-        Lightweight static detection used during __new__.
-        Avoids side effects — only checks file structure.
-        """
-        src = path / "src"
-        name = path.name
-        package = src / name
-        main_py = package / "__main__.py"
-        module_py = package / f"{name}.py"
+    # @staticmethod
+    # def _detect_type_static(path: Path) -> str:
+    #     """
+    #     Lightweight static detection used during __new__.
+    #     Avoids side effects — only checks file structure.
+    #     """
+    #     src = path / "src"
+    #     name = path.name
+    #     package = src / name
+    #     main_py = package / "__main__.py"
+    #     module_py = package / f"{name}.py"
 
-        if package.exists():
-            if main_py.exists():
-                return "program"
-            if module_py.exists():
-                return "module"
+    #     if package.exists():
+    #         if main_py.exists():
+    #             return "program"
+    #         if module_py.exists():
+    #             return "module"
 
-        if (src / "index.html").exists():
-            return "cgi"
+    #     if (src / "index.html").exists():
+    #         return "cgi"
 
-        if len(list(path.glob("*.py"))) == 1:
-            return "script"
+    #     if len(list(path.glob("*.py"))) == 1:
+    #         return "script"
 
-        return "default"
+    #     return "default"
 
     # ──────────────────────────────────────────────
     # Normal Project initialization
     # ──────────────────────────────────────────────
     def __init__(self, p):
         super().__init__(p)
-        print(f"DEBUG Project.__init__ called for {p}")
+        print(f"{DEBUG_PICT}Project.__init__ called for {p}")
         self.name, self.version = self._parse_name_version()
         self.source = self.path / "src" if (self.path / "src").exists() else None
         self.package = self.source / self.name if self.source else None
         self.data = self.source / 'data' if self.source else None
         self.requirements = self.read_requirements()
         self.github = self.deduce_github()
-        self.type = self.detect_type()
+        self.type = self.detect_type(self)
         self.context = self.detect_context()
 
     # ──────────────────────────────────────────────
@@ -167,12 +194,24 @@ class Project(Folder):
             return f"https://github.com/{get_github_username()}/{self.name}.git"
         else:
             return ''
-            
-    def detect_type(self):
-        main_py = self.package / '__main__.py'
-        module_py = self.package / f'{self.name}.py'
 
-        if self.package.exists():
+    @classmethod
+    def detect_type(cls, path: Path) -> str:
+        if path.suffix == '.py': # A source file means the project is a Script or a Module (both, really)
+            if (path.parent / '__init__.py').exists():
+                return 'module'
+            else: return 'script'
+        name, version = parse_nv(path)
+        source = path / 'src'
+        if not source.exists():
+            source = path
+        package = source / name
+        main_py = package / '__main__.py'
+        module_py = package / f'{name}.py'
+        debug(f'Main file detected: {str(main_py)}')
+        debug(f'Module file detected: {str(module_py)}')
+
+        if package.exists():
             target_files = [main_py, module_py]
             for f in target_files:
                 if f.exists():
@@ -180,54 +219,57 @@ class Project(Folder):
     
                     # Subclass-based detection
                     if re.search(r"class\s+\w+\(.*Filter.*\):", text):
-                        return self.Types.FILTER
+                        return cls.Types.FILTER
                     if re.search(r"class\s+\w+\(.*Driver.*\):", text):
-                        return self.Types.DRIVER
+                        return cls.Types.DRIVER
     
                     # GUI imports
                     if re.search(r"\bimport\s+tkinter\b|\bfrom\s+tkinter\b", text):
-                        return self.Types.TK
-                    if re.search(r"\bimport\s+gi\b.*Gtk", text):
-                        return self.Types.GTK
+                        return cls.Types.TK
+                    if re.search(r"import\s+gi", text):
+                        return 'gtkapp'
     
             if main_py.exists():
-                return self.Types.PROGRAM
+                return cls.Types.PROGRAM
     
-        if (self.source / "index.html").exists():
-            return self.Types.CGI
+        if (source / "index.html").exists():
+            return cls.Types.CGI
     
-        if len(list(self.path.glob("*.py"))) == 1:
-            return self.Types.SCRIPT
+        if len(list(path.glob("*.py"))) == 1:
+            return cls.Types.SCRIPT
     
-        return self.Types.DEFAULT
+        return cls.Types.DEFAULT
 
     def get_author(self):
-        AUTHOR_FILE = self.data / 'author.txt'
-        if AUTHOR_FILE.exists():
-            return AUTHOR_FILE.read_text()
-        else:
-            try:
-                author = subprocess.run(
-                    ["git", "config", "user.name"],
-                    capture_output=True,
-                    text=True,
-                    check=True
-                ).stdout.strip()
-            except Exception:
-                author = None
-        
-            if not author:
+        author = None
+        if self.data:
+            AUTHOR_FILE = self.data / 'author.txt'
+            if AUTHOR_FILE.exists():
+                return AUTHOR_FILE.read_text()
+            else:
                 try:
-                    author = get_full_name()
+                    author = subprocess.run(
+                        ["git", "config", "user.name"],
+                        capture_output=True,
+                        text=True,
+                        check=True
+                    ).stdout.strip()
                 except Exception:
-                    author = os.getenv("USER", "")
+                    author = None
+            
+                if not author:
+                    try:
+                        author = get_full_name()
+                    except Exception:
+                        author = os.getenv("USER", "")
 
         return author or ''
 
     def get_description(self):
-        DESC_FILE = self.data / 'description.txt'
-        if DESC_FILE.exists():
-            return DESC_FILE.read_text()
+        if self.data:
+            DESC_FILE = self.data / 'description.txt'
+            if DESC_FILE.exists():
+                return DESC_FILE.read_text()
         return ''
 
     def read_requirements(self):
@@ -269,5 +311,10 @@ class Project(Folder):
             parts.append("[green]src/[/green]")
         return " ".join(parts)
 
+    def run(self):
+        """ Run the project. """
+        pass
+
 # Register this type with File (unchanged)
-File.register_folder(lambda p: (p / "src").exists())(Project)
+# File.register_folder(lambda p: (p / "src").exists())(Project)
+File.register_folder(looks_like_project)(Project)
