@@ -34,9 +34,12 @@ details here.
 
 """
 
+from rich import print as rp
+
 from pygnition.driver import Driver
 from pygnition.files import File
 from pygnition.gui_tools import choose_file
+from pygnition.lumberjack import debug, error, info, stop, warn
 from pygnition.picts import *
 
 from workshop.projects import Project

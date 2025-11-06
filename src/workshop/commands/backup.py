@@ -34,14 +34,20 @@ details here.
 
 """
 
+from pygnition.driver import Driver
+
 from workshop.projects import Project
 
-@Project.register("driver")
-class Driver(Project):
-    """A driver or automation script used to control external tools."""
-    def __init__(self, path):
-        print(f"Initializing {self.__class__.__name__}")
-        super().__init__(path)
+class Backup(Driver.Command):
+    """ Run the project given on the command line, the current project,
+        or whatever project is represented by cwd(), if any.
+    """
+    def __init__(self, name, line, **kwargs):
+        super().__init__(name, line, **kwargs)
+
+    def run(self):
+        result = None
+
         
-    def describe(self):
-        return f"[bold]{self.name}[/bold] (Driver Project)"
+        
+        return result

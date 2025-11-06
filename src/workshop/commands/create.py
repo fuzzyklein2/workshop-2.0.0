@@ -34,6 +34,7 @@ details here.
 
 """
 
+from pygnition.constants import HYPHEN
 from pygnition.driver import Driver
 from pygnition.files import File
 from pygnition.lumberjack import debug, error, info, stop, warn

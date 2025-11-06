@@ -34,12 +34,14 @@ details here.
 
 """
 
-
 # from __future__ import annotations
 import os, re, subprocess, logging
 from enum import Enum, auto
 from pathlib import Path
+import sys
 from types import SimpleNamespace
+
+from rich import print as rp
 
 from pygnition._data_tools import is_valid_data_line
 from pygnition.constants import HYPHEN
@@ -47,6 +49,7 @@ from pygnition.files import File, Folder
 from pygnition._git_tools import get_github_username
 from pygnition.lumberjack import debug, error, info, stop, warn
 from pygnition.picts import *
+from pygnition.tools import cd, cwd, pwd, run_cmd, subdirs
 from pygnition.user_tools import get_full_name
 
 def parse_nv(s: str | Path) -> (str, str):
@@ -123,6 +126,7 @@ class Project(Folder):
         """
         def decorator(subclass):
             cls._registry[name] = subclass
+            print(f'Added {name} : {subclass} to Project registry.')
             return subclass
         return decorator
 
@@ -134,10 +138,12 @@ class Project(Folder):
 
         path = Path(p)
         try:
+            print(f'Constructing {cls}')
             project_type = cls.detect_type(path)
             subclass = cls._registry.get(project_type, cls)
-            if subclass is not cls:
-                return super(Project, subclass).__new__(subclass)
+            print(f'Subclass: {subclass}')
+            # if subclass is not cls:
+            return subclass.__new__(subclass, p)
         except Exception as e:
             print(f"DEBUG: Project type detection failed: {e}")
 
@@ -176,7 +182,7 @@ class Project(Folder):
         super().__init__(p)
         print(f"{DEBUG_PICT}Project.__init__ called for {p}")
         self.name, self.version = self._parse_name_version()
-        self.source = self.path / "src" if (self.path / "src").exists() else None
+        self.source = self.path / "src" if (self.path / "src").exists() else self.path
         self.package = self.source / self.name if self.source else None
         self.data = self.source / 'data' if self.source else None
         self.requirements = self.read_requirements()
@@ -219,26 +225,26 @@ class Project(Folder):
     
                     # Subclass-based detection
                     if re.search(r"class\s+\w+\(.*Filter.*\):", text):
-                        return cls.Types.FILTER
+                        return 'filter'
                     if re.search(r"class\s+\w+\(.*Driver.*\):", text):
-                        return cls.Types.DRIVER
+                        return 'driver'
     
                     # GUI imports
                     if re.search(r"\bimport\s+tkinter\b|\bfrom\s+tkinter\b", text):
-                        return cls.Types.TK
+                        return 'tkapp'
                     if re.search(r"import\s+gi", text):
                         return 'gtkapp'
     
             if main_py.exists():
-                return cls.Types.PROGRAM
+                return 'program'
     
         if (source / "index.html").exists():
-            return cls.Types.CGI
+            return 'cgi'
     
         if len(list(path.glob("*.py"))) == 1:
-            return cls.Types.SCRIPT
+            return 'script'
     
-        return cls.Types.DEFAULT
+        return 'script'
 
     def get_author(self):
         author = None
@@ -301,7 +307,7 @@ class Project(Folder):
         return self.path.name, None
 
     def __repr__(self):
-        return f"Project(name={self.name!r}, version={self.version!r}, path={self.path!s})"
+        return f"{self.__class__.__name__} (name={self.name!r}, version={self.version!r}, path={self.path!s})"
 
     def describe(self):
         parts = [f"[bold]{self.name}[/bold]"]
@@ -313,7 +319,28 @@ class Project(Folder):
 
     def run(self):
         """ Run the project. """
-        pass
+        rp(f'{INFO_PICT}[green]Running {self.__class__.__name__} {self.name} {self.version} ...[/]')
+        CWD = cwd()
+        cd(self.source)
+        pwd()
+        # sys.path.insert(0, self.source.resolve())
+        p = subprocess.run(self.build_command(), check=False, shell=False, capture_output=True, text=True)
+        cd(CWD)
+        return p
+        # c = self.build_command()
+        # p = run_cmd(c)
+
+    def build_command(self):
+        """ Must be overridden by subclasses that need anything different. """
+        x = None
+        # Detect the relevant python executable
+        for d in subdirs(self.path, all=True):
+            bin_dir = self / d / 'bin'
+            for exe in bin_dir.glob('python*'):
+                x = exe
+                break
+        if not x: x = sys.executable
+        return [str(x), '-m', self.name]                                        
 
 # Register this type with File (unchanged)
 # File.register_folder(lambda p: (p / "src").exists())(Project)
