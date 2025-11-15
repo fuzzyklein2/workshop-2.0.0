@@ -39,7 +39,7 @@ import shutil
 from pygnition.driver import Driver
 from pygnition.lumberjack import debug, error, info, stop, warn
 
-from workshop.projects import Project
+# from workshop.projects import Project
 
 CLEAN_PATTERNS = (
     '__pycache__',
@@ -53,8 +53,8 @@ CLEAN_EXCLUDE = (
 
 class Clean(Driver.Command):
     """Recursively remove annoying build/cache folders in the current project."""
-    def __init__(self, name, line, **kwargs):
-        super().__init__(name, line, **kwargs)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
 
     def run(self):
         project_root = self.driver.current_project.path

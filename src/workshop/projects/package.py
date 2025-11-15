@@ -35,7 +35,7 @@ details here.
 """
 
 
-from workshop.projects import Project
+from .project import Project
 
 @Project.register("module")
 class Package(Project):

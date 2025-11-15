@@ -35,22 +35,22 @@ details here.
 """
 
 from pygnition.driver import Driver
+from pygnition.lumberjack import debug, error, info, stop, warn
 
-from workshop.projects import Project
+from workshop.projects.builders.builder import Builder
 
 class Compile(Driver.Command):
-    def __init__(self, name, line):
-        super().__init__(name, line)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
         debug(f'Initializing {self.__class__.__name__} object ...')
 
-def __init__(self):
-    super().__init__()
-
-def test(self):
-    warn(f'{self.name} is under construction!')
-    if self.testing: self.dump()
-
-def run(self):
-    print(f'Hello, {GLOBE_AMERICA_PICT.strip()} !')
-    super().run()
+    def test(self):
+        warn(f'{self.name} is under construction!')
+        if self.testing: self.dump()
+    
+    def run(self):
+        """ Build the current project. """
+        super().run()
+        b = Builder(self.driver.current_project)
+        b.compile()
 

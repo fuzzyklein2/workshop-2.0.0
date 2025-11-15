@@ -12,7 +12,7 @@ try:
     globals().update(vars(_metadata))
 except ModuleNotFoundError: # Most likely happens in a Jupyter notebook or a console
                             # Appears to happen in pydoc as well.
-    from .._metadata import *
+    from ..._metadata import *
 
 __doc__ = f"""The 🔥  pygnition 🔥  package sets up an environment for any script that imports it.
 

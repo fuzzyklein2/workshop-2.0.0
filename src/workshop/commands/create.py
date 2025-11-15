@@ -43,12 +43,12 @@ from pygnition.tools import cwd
 
 from workshop.constants import KEY_PROMPTS
 from workshop.new_project_dialog import new_project_dialog
-from workshop.projects import Project
+# from workshop.projects import Project
 
 
 class Create(Driver.Command):
-    def __init__(self, name, line, **kwargs):
-        super().__init__(name, line, **kwargs)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
         self.repo_url = None
         self.template_repo_url = None
         self.clone_dest = None

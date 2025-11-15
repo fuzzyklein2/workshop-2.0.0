@@ -1,0 +1,36 @@
+.
+├── docs
+├── .envrc
+├── .git
+├── .gitignore
+├── image
+│   └── Under_Construction01_transparent.gif
+├── LICENSE~
+├── notebooks
+│   └── README.ipynb
+├── pyproject.toml
+├── pytest.ini
+├── requirements.txt
+├── src
+│   └── hw
+│       ├── data
+│       │   ├── author.txt
+│       │   ├── copyright.txt
+│       │   ├── description.txt
+│       │   ├── epilog.txt
+│       │   ├── name.txt
+│       │   ├── requirements.txt
+│       │   ├── std_opts.csv
+│       │   ├── std_opts.pkl
+│       │   └── version.txt
+│       ├── etc
+│       │   ├── config.ini
+│       ├── hw.py
+│       ├── __init__.py
+│       ├── __main__.py
+│       ├── _metadata.py
+│       └── startmeup.py
+├── tests
+└── .venv
+
+246 directories, 2003 files

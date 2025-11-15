@@ -34,20 +34,14 @@ details here.
 
 """
 
-from pygnition.driver import Driver
+from .project import Project
 
-# from workshop.projects import Project
+@Project.register("cpp")
+class CppProject(Project):
+    """A C++-based program."""
+    def describe(self):
+        return f"[bold]{self.name}[/bold] (C++ Project)"
 
-class Publish(Driver.Command):
-    """ Run the project given on the command the current project,
-        or whatever project is represented by cwd(), if any.
-    """
-    def __init__(self, name, **kwargs):
-        super().__init__(name, **kwargs)
-
-    def run(self):
-        result = None
-
+    def compile(self):
+        """ Compile the program and shared libraries. """
         
-        
-        return result

@@ -53,3 +53,5 @@ KEY_PROMPTS = [
     ('github', 'GitHub Repository:'),
     ('license', 'License:')
 ]
+
+CPP_EXTS = {'.c', '.cp', '.cpp', '.cc', '.cxx', '.c++'}

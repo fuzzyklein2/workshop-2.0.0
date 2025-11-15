@@ -34,20 +34,39 @@ details here.
 
 """
 
-from pygnition.driver import Driver
+import shutil
 
-from workshop.projects import Project
+from pygnition.driver import Driver
+from pygnition.files import File
+
+# from workshop.projects import Project
 
 class Backup(Driver.Command):
-    """ Run the project given on the command line, the current project,
-        or whatever project is represented by cwd(), if any.
+    """ Clean the current project and back it up locally.
     """
-    def __init__(self, name, line, **kwargs):
-        super().__init__(name, line, **kwargs)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
+        if self.args:
+            self.project = File(self.args[0])
+        elif self.driver.current_project:
+            self.project = self.driver.current_project
+        else: self.project = File(choose_file(directory=True))
+        if not self.project:
+            info(f'User cancelled backup operation.')
+            return
+        self.dest_dir = self.driver.user_data / 'backup' / self.project.path.name
+        if self.debug: print(f"""Folder to back up: {self.project.path}
+Destination directory: {self.dest_dir}
+""")
 
     def run(self):
         result = None
 
-        
+        self.driver.default('clean')
+        shutil.copytree(self.project.path,
+                        self.dest_dir,
+                        dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns('.git', '.pytest_cache', '.venv')
+                       )
         
         return result

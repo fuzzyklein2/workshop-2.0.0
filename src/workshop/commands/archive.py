@@ -36,14 +36,14 @@ details here.
 
 from pygnition.driver import Driver
 
-from workshop.projects import Project
+# from workshop.projects import Project
 
 class Archive(Driver.Command):
     """ Run the project given on the command line, the current project,
         or whatever project is represented by cwd(), if any.
     """
-    def __init__(self, name, line, **kwargs):
-        super().__init__(name, line, **kwargs)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
 
     def run(self):
         result = None

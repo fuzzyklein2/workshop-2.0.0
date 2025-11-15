@@ -1,4 +1,3 @@
-# __main__.py
 
 from importlib import import_module
 
@@ -8,4 +7,5 @@ if __package__:
 else:
     # Fallback for running directly without the -m flag
     from __init__ import *
+
 

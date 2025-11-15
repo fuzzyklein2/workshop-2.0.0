@@ -68,13 +68,14 @@ from .commands import COMMANDS
 from .constants import KEY_PROMPTS
 from .ghtools import *
 from .new_project_dialog import new_project_dialog
-from .projects import Project # probably don't really need to except for type hints and such
+from .projects.project import Project # probably don't really need to except for type hints and such
 
 class Workshop(Driver):
     def __init__(self, *args, **kwargs):
         Driver.__init__(self, *args, **kwargs)
         if self.debug and self.args: print(self.args[0])
         self.current_project = Project(cwd()) or None
+        self.backup_dir = self.user_data / 'backup'
         for name, cls in COMMANDS.items():
             setattr(self, name.title(), cls)
 

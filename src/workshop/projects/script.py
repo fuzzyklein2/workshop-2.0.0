@@ -33,7 +33,7 @@ details here.
 ## [GitHub]({get_upstream_url()})
 
 """
-from workshop.projects import Project
+from .project import Project
 
 @Project.register("script")
 class Script(Project):

@@ -42,12 +42,12 @@ from pygnition.gui_tools import choose_file
 from pygnition.lumberjack import debug, error, info, stop, warn
 from pygnition.picts import *
 
-from workshop.projects import Project
+# from workshop.projects import Project
 
 class Open(Driver.Command):
     """ Open a project by `cd`'ing to its root directory. """
-    def __init__(self, name, line, **kwargs):
-        super().__init__(name, line, **kwargs)
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
 
         # pp(self.args)
 

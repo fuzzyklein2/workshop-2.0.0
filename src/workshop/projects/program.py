@@ -34,7 +34,7 @@ details here.
 
 """
 
-from workshop.projects import Project
+from .project import Project
 
 @Project.register("program")
 class Program(Project):

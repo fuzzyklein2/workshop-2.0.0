@@ -52,6 +52,8 @@ from pygnition.picts import *
 from pygnition.tools import cd, cwd, pwd, run_cmd, subdirs
 from pygnition.user_tools import get_full_name
 
+from workshop.constants import CPP_EXTS
+
 def parse_nv(s: str | Path) -> (str, str):
     debug(f'{type(s)=}')
     COMPONENTS = Path(s).name.split(HYPHEN)
@@ -126,7 +128,7 @@ class Project(Folder):
         """
         def decorator(subclass):
             cls._registry[name] = subclass
-            print(f'Added {name} : {subclass} to Project registry.')
+            # print(f'Added {name} : {subclass} to Project registry.')
             return subclass
         return decorator
 
@@ -149,32 +151,6 @@ class Project(Folder):
 
         return super().__new__(cls)
 
-    # @staticmethod
-    # def _detect_type_static(path: Path) -> str:
-    #     """
-    #     Lightweight static detection used during __new__.
-    #     Avoids side effects — only checks file structure.
-    #     """
-    #     src = path / "src"
-    #     name = path.name
-    #     package = src / name
-    #     main_py = package / "__main__.py"
-    #     module_py = package / f"{name}.py"
-
-    #     if package.exists():
-    #         if main_py.exists():
-    #             return "program"
-    #         if module_py.exists():
-    #             return "module"
-
-    #     if (src / "index.html").exists():
-    #         return "cgi"
-
-    #     if len(list(path.glob("*.py"))) == 1:
-    #         return "script"
-
-    #     return "default"
-
     # ──────────────────────────────────────────────
     # Normal Project initialization
     # ──────────────────────────────────────────────
@@ -182,7 +158,14 @@ class Project(Folder):
         super().__init__(p)
         print(f"{DEBUG_PICT}Project.__init__ called for {p}")
         self.name, self.version = self._parse_name_version()
-        self.source = self.path / "src" if (self.path / "src").exists() else self.path
+        src = self.path / 'src'
+        source = self.path / 'source'
+        if source.exists():
+            self.source = source
+        elif src.exists():
+            self.source = src
+        else:
+            self.source = self.path
         self.package = self.source / self.name if self.source else None
         self.data = self.source / 'data' if self.source else None
         self.requirements = self.read_requirements()
@@ -201,17 +184,25 @@ class Project(Folder):
         else:
             return ''
 
-    @classmethod
-    def detect_type(cls, path: Path) -> str:
+    @staticmethod
+    def detect_type(path: Path) -> str:
         if path.suffix == '.py': # A source file means the project is a Script or a Module (both, really)
             if (path.parent / '__init__.py').exists():
                 return 'module'
             else: return 'script'
         name, version = parse_nv(path)
-        source = path / 'src'
+        source = path / 'source'
+        if not source.exists():
+            source = path / 'src'
         if not source.exists():
             source = path
         package = source / name
+
+        # Check for c/c++ code
+        if  any(p.suffix.lower() in CPP_EXTS for p in path.iterdir() if p.is_file()):
+            return 'cpp'
+        
+        
         main_py = package / '__main__.py'
         module_py = package / f'{name}.py'
         debug(f'Main file detected: {str(main_py)}')
